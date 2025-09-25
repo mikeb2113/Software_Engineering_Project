@@ -1,0 +1,2 @@
+You may begin running the docker environment by executing the python file: "docker_launcher.py" from the project's root directory.
+The docker environment may also be shut down from the root directory by running the file "docker_shut_down.py"

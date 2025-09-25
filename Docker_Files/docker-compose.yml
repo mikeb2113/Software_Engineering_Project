@@ -1,0 +1,16 @@
+version: "3.9"
+
+services:
+  app:
+    build: .
+    container_name: my_app
+    volumes:
+      - .:/app
+    # If HOST_PORT is set, use it. Otherwise map to a random free host port.
+    ports:
+      - "${HOST_PORT:-0}:8000"
+    healthcheck:
+      test: ["CMD", "bash", "-c", "printf '' >/dev/tcp/127.0.0.1/8000"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
