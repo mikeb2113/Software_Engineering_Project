@@ -1,6 +1,2 @@
-<<<<<<< HEAD
-#dummy text
-=======
 #dummy text
 flask
->>>>>>> 033e36a (Add .gitattributes and normalize line endings)

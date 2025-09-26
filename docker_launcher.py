@@ -80,68 +80,60 @@ def ensure_compose_plugin():
     except Exception:
         return False
 
+PROJECT = "sep"  # match your manual command
+
+def run_compose(args, use_sudo=False, **popen_kwargs):
+    env = os.environ.copy()
+    env["DOCKER_BUILDKIT"] = "0"  # match the working manual run
+    base = (["sudo"] if use_sudo else []) + ["docker", "compose", "-f", COMPOSE_FILE, "-p", PROJECT]
+    return subprocess.run(base + args, check=True, env=env, **popen_kwargs)
+
 def start():
     if not ensure_docker():
-        sys.exit("\n❌ Docker is not installed/ready. See instructions above, then re-run this launcher.")
+        sys.exit("\n❌ Docker is not installed/ready...")
 
     if not ensure_compose_plugin():
         sys.exit("❌ Compose v2 plugin missing. On Ubuntu: sudo apt install -y docker-compose-plugin")
 
-    # If user just got added to docker group, they might still need sudo in this session.
-    # Try without sudo first; if it fails with permission, hint them.
+    # up --build (detached)
     try:
-        run(["docker", "compose", "-f", COMPOSE_FILE, "up", "-d", "--build"])
-    except subprocess.CalledProcessError as e:
-        print("⚠️ docker compose up failed. Trying with sudo…")
-        try:
-            run(["sudo", "docker", "compose", "-f", COMPOSE_FILE, "up", "-d", "--build"])
-        except subprocess.CalledProcessError:
-            sys.exit("❌ Could not start containers. If this is Ubuntu, log out/in after group change, then retry.")
-
-    # Retrieve mapped host port for container port 8000
-<<<<<<< HEAD
-    try:
-        port_cmd = ["docker", "compose", "-f", COMPOSE_FILE, "port", "app", "8000"]
-        result = subprocess.run(port_cmd, capture_output=True, text=True, check=True)
+        run_compose(["up", "-d", "--build"])
     except subprocess.CalledProcessError:
-        # Try sudo fallback
-        result = subprocess.run(["sudo"] + port_cmd, capture_output=True, text=True, check=True)
+        print("⚠️ docker compose up failed. Trying with sudo…")
+        run_compose(["up", "-d", "--build"], use_sudo=True)
 
-    addr = result.stdout.strip() or "127.0.0.1:8000"
-    host, port = addr.replace("0.0.0.0", "127.0.0.1").split(":")
-    url = f"http://{host}:{port}"
-    print(f"✅ App is starting… {url}")
-    print("ℹ️ To stop: python docker_shutdown.py   (or)   docker compose -f Docker_Files/docker-compose.yml down")
-=======
-    # Fixed port mode: compose maps 8000:8000
     url = "http://127.0.0.1:8000"
 
-    # Wait up to ~30s for the service to respond before opening the browser
-    import urllib.request
-    deadline = time.time() + 30
+    # Wait up to 120s, not 30
+    import urllib.request, time
+    deadline = time.time() + 120
     while time.time() < deadline:
         try:
             with urllib.request.urlopen(url, timeout=2):
-                break  # service is up
+                break
         except Exception:
-            time.sleep(0.5)
+            time.sleep(1)
+
+    # Optional: if not up yet, show quick diagnostics
+    try:
+        run_compose(["ps"])
+    except Exception:
+        pass
 
     print(f"✅ App is starting… {url}")
-    print(f"ℹ️ To stop: python docker_shut_down.py   (or)   docker compose -f {COMPOSE_FILE} down")
->>>>>>> 033e36a (Add .gitattributes and normalize line endings)
+    print(f"ℹ️ To stop: python docker_shut_down.py   (or)   docker compose -f {COMPOSE_FILE} -p {PROJECT} down")
+
     try:
         webbrowser.open(url)
     except Exception:
         pass
-
+    
 def stop():
     try:
-        run(["docker", "compose", "-f", COMPOSE_FILE, "down"])
+        run_compose(["down", "--remove-orphans"])
     except subprocess.CalledProcessError:
-        try:
-            run(["sudo", "docker", "compose", "-f", COMPOSE_FILE, "down"])
-        except subprocess.CalledProcessError:
-            sys.exit("❌ Failed to stop containers. You may need to ensure Docker is running.")
+        print("⚠️ Trying with sudo…")
+        run_compose(["down", "--remove-orphans"], use_sudo=True)
 
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "stop":

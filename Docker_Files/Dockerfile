@@ -2,18 +2,6 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-<<<<<<< HEAD
-# 1) copy only requirements first for better caching
-COPY requirements.txt .
-
-# 2) install deps
-RUN pip install --no-cache-dir -r requirements.txt
-
-# 3) now copy the rest of the source
-COPY . .
-
-CMD ["python", "main.py"]
-=======
 # copy reqs first for caching
 COPY Docker_Files/requirements.txt /app/requirements.txt
 
@@ -29,4 +17,3 @@ COPY . /app
 
 EXPOSE 8000
 CMD ["python", "app.py"]
->>>>>>> 033e36a (Add .gitattributes and normalize line endings)
