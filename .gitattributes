@@ -1,0 +1,5 @@
+# Auto-detect text files and normalize to LF in repo
+* text=auto eol=lf
+
+# Windows-only files can keep CRLF if you want
+*.ps1 text eol=crlf
