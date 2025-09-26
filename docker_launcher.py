@@ -99,6 +99,7 @@ def start():
             sys.exit("❌ Could not start containers. If this is Ubuntu, log out/in after group change, then retry.")
 
     # Retrieve mapped host port for container port 8000
+<<<<<<< HEAD
     try:
         port_cmd = ["docker", "compose", "-f", COMPOSE_FILE, "port", "app", "8000"]
         result = subprocess.run(port_cmd, capture_output=True, text=True, check=True)
@@ -111,6 +112,23 @@ def start():
     url = f"http://{host}:{port}"
     print(f"✅ App is starting… {url}")
     print("ℹ️ To stop: python docker_shutdown.py   (or)   docker compose -f Docker_Files/docker-compose.yml down")
+=======
+    # Fixed port mode: compose maps 8000:8000
+    url = "http://127.0.0.1:8000"
+
+    # Wait up to ~30s for the service to respond before opening the browser
+    import urllib.request
+    deadline = time.time() + 30
+    while time.time() < deadline:
+        try:
+            with urllib.request.urlopen(url, timeout=2):
+                break  # service is up
+        except Exception:
+            time.sleep(0.5)
+
+    print(f"✅ App is starting… {url}")
+    print(f"ℹ️ To stop: python docker_shut_down.py   (or)   docker compose -f {COMPOSE_FILE} down")
+>>>>>>> 033e36a (Add .gitattributes and normalize line endings)
     try:
         webbrowser.open(url)
     except Exception:
