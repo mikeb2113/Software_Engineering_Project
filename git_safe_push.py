@@ -8,10 +8,10 @@ import sys
 
 PROTECTED = {"main", "master", "develop"}  # protected branches
 
-def run(cmd, check=True, capture=False):
-    if capture:
-        return subprocess.check_output(cmd, text=True).strip()
-    return subprocess.run(cmd, check=check)
+def run(cmd, check=True, quiet=False):
+    stdout = subprocess.DEVNULL if quiet else None
+    stderr = subprocess.DEVNULL if quiet else None
+    return subprocess.run(cmd, check=check, stdout=stdout, stderr=stderr)
 
 def ensure_repo():
     try:
