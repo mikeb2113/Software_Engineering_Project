@@ -12,7 +12,7 @@ def run(cmd, check=True, quiet=False):
 def ensure_repo():
     """Ensure we're inside a usable git clone; clone or wire up remote if needed."""
     if not os.path.exists(".git"):
-        print(ℹ️  No .git found. Initializing by cloning…")
+        print("ℹ️  No .git found. Initializing by cloning…")
         if os.listdir("."):
             print("⚠️ Folder not empty. Cloning into 'repo_clone/' and switching there.")
             clone_path = os.path.join(os.getcwd(), "repo_clone")
