@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 import subprocess
 import sys
 
@@ -9,6 +10,9 @@ BRANCHES = {
     "3": "marvin",
     "4": "saksham",
 }
+
+# Your GitHub repo URL
+REPO_URL = "https://github.com/mikeb2113/Software_Engineering_Project.git"
 
 def run(cmd, check=True):
     return subprocess.run(cmd, check=check)
@@ -22,7 +26,23 @@ def branch_exists(branch):
     )
     return result.returncode == 0
 
+def ensure_repo():
+    """Ensure we are inside a git repo, or clone if not"""
+    if not os.path.exists(".git"):
+        print("ℹ️  No .git directory found. Initializing repository...")
+        # Remove ZIP-style contents to avoid conflicts
+        if os.listdir("."):
+            print("⚠️ Current folder is not empty. Cloning repo into 'repo_clone' instead.")
+            clone_path = os.path.join(os.getcwd(), "repo_clone")
+            run(["git", "clone", REPO_URL, clone_path])
+            os.chdir(clone_path)
+        else:
+            run(["git", "clone", REPO_URL, "."])
+        print("✅ Repository initialized and connected to remote.")
+
 def main():
+    ensure_repo()
+
     print("Select a branch to pull from:")
     for num, name in BRANCHES.items():
         print(f" {num}. {name}")
@@ -34,17 +54,14 @@ def main():
     branch = BRANCHES[choice]
 
     try:
-        # Always fetch latest info from remote
+        # Always fetch latest info
         run(["git", "fetch", "origin"])
 
         if branch_exists(branch):
-            # Branch already exists locally → just switch
             run(["git", "checkout", branch])
         else:
-            # Branch missing locally → create it tracking remote
             run(["git", "checkout", "-b", branch, f"origin/{branch}"])
 
-        # Pull latest updates into the branch
         run(["git", "pull", "origin", branch])
         print(f"✅ Branch '{branch}' is now up to date with origin/{branch}.")
     except subprocess.CalledProcessError:
