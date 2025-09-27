@@ -14,10 +14,24 @@ def run(cmd, check=True, quiet=False):
     return subprocess.run(cmd, check=check, stdout=stdout, stderr=stderr)
 
 def ensure_repo():
-    try:
-        run(["git", "rev-parse", "--is-inside-work-tree"])
-    except subprocess.CalledProcessError:
-        sys.exit("❌ Not inside a git repository.")
+    # If we're in a parent folder and a clone exists under repo_clone/, hop into it.
+    if not os.path.exists(".git") and os.path.isdir("repo_clone") and os.path.exists("repo_clone/.git"):
+        os.chdir("repo_clone")
+
+    if not os.path.exists(".git"):
+        print("ℹ️  No .git found. Cloning repository…")
+        if os.listdir("."):
+            clone_path = os.path.join(os.getcwd(), "repo_clone")
+            run(["git", "clone", REPO_URL, clone_path])
+            os.chdir(clone_path)
+        else:
+            run(["git", "clone", REPO_URL, "."])
+        print("✅ Repository initialized.")
+    # Ensure origin exists
+    has_origin = run(["git", "remote", "get-url", "origin"], check=False, quiet=True).returncode == 0
+    if not has_origin:
+        run(["git", "remote", "add", "origin", REPO_URL])
+    run(["git", "fetch", "origin"])
 
 def branch_exists_local(name):
     try:
